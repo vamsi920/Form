@@ -6,44 +6,37 @@ import {
   View,
   TouchableOpacity,
   ScrollView,
-  FlatList
+  FlatList,
+  Alert
 } from "react-native";
-import { TextInput, RadioButton, Button } from "react-native-paper";
+import { TextInput, Button } from "react-native-paper";
 import { width, height, totalSize } from "react-native-dimension";
-import CheckboxFormX from "react-native-checkbox-form";
-import AsyncStorage from "@react-native-community/async-storage";
-const mockData = [
-  {
-    label: "Cricket",
-    value: "Cricket"
-  },
-  {
-    label: "FootBall",
-    value: "FootBall"
-  },
-  {
-    label: "Dance",
-    value: "Dance"
-  }
-];
-
+import Modal from "react-native-modalbox";
+import RadioForm, {RadioButton, RadioButtonInput, RadioButtonLabel} from 'react-native-simple-radio-button';
 export default class App extends Component<Props> {
   arr = [];
-  id = 0;
+
   constructor(props) {
     super(props);
     this.state = {
+      arr:[{
+        arrid:0,
+        arrEmail:'',
+        arrName:'',
+        arrPhone:'',
+        arrHobby:'',
+      }],
+      id:0,
       email: "",
+      isChecked:true,
       name: "",
       phone: "",
-      item: [
-        {
-          id: 1,
-          Email: "Null",
-          Name: "Null",
-          Phone: "Null"
-        }
-      ]
+      editedHobby:'',
+      isOpen: false,
+      editedEmail:'',
+      editedName:'',
+      editedPhone:'',
+      buttonValue:''
     };
   }
   setEmail = value => {
@@ -56,44 +49,142 @@ export default class App extends Component<Props> {
     this.setState({ phone: value });
   };
 
-  _onSelect = item => {
-    console.log(item);
+  updateEmail = value => {
+    this.setState({ editedEmail: value });
   };
-  storeData = async () => {
-    this.arr.push({
-      id: this.id,
-      Email: this.state.email,
-      Name: this.state.name,
-      Phone: this.state.phone
-    });
-    this.id++;
+  updateName = value => {
+    this.setState({ editedName: value });
+  };
+  updatePhone = value => {
+    this.setState({ editedPhone: value });
+  };
+addData = () => {
+  var arr1 = this.state.arr;
+  var arrid = this.state.id;
+  arrid++;
+  var arrEmail = this.state.email;
+  var arrName = this.state.name;
+  var arrPhone = this.state.phone;
+  var arrHobby=this.state.buttonValue;
+  arr1.push({arrid, arrEmail, arrName, arrPhone, arrHobby});
+  this.setState({
 
-    await AsyncStorage.setItem("list", JSON.stringify(this.arr));
-    this.setState({
-      item: JSON.parse(await AsyncStorage.getItem("list"))
-    });
-  };
+    arr: arr1,
+    email: "",
+    name: "",
+    phone: "",
+
+  });
+  
+}
+deleteData=(row)=>{
+var arr2 = this.state.arr;
+  var index=arr2.indexOf(row);
+  arr2.splice(index, 1);
+  this.setState({
+    arr:arr2,
+  });
+  
+}
+editData=(row)=>{
+this.refs.modal2.close();
+var arr3 = this.state.arr;
+var arrid= this.state.id;
+var index=arr3.indexOf(row);
+var editedName= this.state.editedName;
+var editedEmail= this.state.editedEmail;
+var editedPhone= this.state.editedPhone;
+var editedHobby= this.state.editedHobby;
+this.state.arr.splice(index, 1);
+this.state.arr.push(arrid, editedEmail, editedName, editedPhone, editedHobby);
+}
+
+List = () => {
+  
+  return this.state.arr.map((arr, arrid) => {
+    return (
+      <TouchableOpacity key={arrid} 
+        
+        onLongPress={()=>{
+              Alert.alert(
+                  'choose one:',
+                  '',
+                  [
+    {text: 'Delete', onPress: () => {this.deleteData(arr)}},
+    {
+      text: 'Edit',
+      onPress: () =>{ this.refs.modal2.open();} ,
+    },
+    {text: 'Do nothing', onPress: () =>{} },
+  ],
+                )
+            }}
+        style={{ flexDirection: "row", justifyContent:'space-around' , }}
+      
+       
+      >
+        <Text>{arr.arrEmail}</Text>
+        <Text>{arr.arrName}</Text>
+        <Text>{arr.arrPhone}</Text>
+        <Text>{arr.arrHobby}</Text>
+      </TouchableOpacity>
+    );
+  });
+}
 
   render() {
-    if (this.state.item.length > 0) {
-      renderList = this.state.item.map(item => {
-        return (
-          <View
-            key={item.id}
-            style={{ flexDirection: "row", justifyContent: "space-around" , flexWrap: "wrap" }}
-          >
-            <Text>{item.Email}</Text>
-            <Text>{item.Name}</Text>
-            <Text>{item.Phone}</Text>
-          </View>
-        );
-      });
-    } else {
-      renderList = <Text>No values</Text>;
-    }
+     var radio_props = [
+  {label: 'Cricket', value: 'Cricket' },
+  {label: 'Football', value: 'Football' },
+  {label: 'Dance', value : 'Dance' },
+];
+ 
     return (
       <View style={styles.container}>
         <ScrollView>
+        <Modal
+              style={{backgroundColor:'#eee'}}
+              backdrop={false}
+            
+              position={"top"}
+              ref={"modal2"}
+            >
+            <TextInput
+              label="Email"
+              value={this.state.editedEmail}
+              onChangeText={this.updateEmail}
+              mode="outlined"
+              style={styles.input}
+            />
+            <TextInput
+              label="Name"
+              value={this.state.editedName}
+              onChangeText={this.updateName}
+              mode="outlined"
+              style={styles.input}
+            />
+            <TextInput
+              label="Phone"
+              value={this.state.editedPhone}
+              onChangeText={this.updatePhone}
+              mode="outlined"
+              keyboardType="numeric"
+              style={styles.input}
+            />
+             <RadioForm
+          radio_props={radio_props}
+          initial={null}
+          onPress={(value) => {this.setState({value:value, editedHobby:value})}}
+          buttonColor={'#000'}
+          formHorizontal={true}
+          buttonSize={10}
+          style={{paddingLeft:20, width:'80%', marginTop:20,}}
+          labelStyle={{marginRight:20}}
+        />
+            <Button mode="outlined" onPress={()=>{
+              this.editData(this.state.arr.arrid)
+            }}><Text>edit data</Text></Button>
+            </Modal>
           <View style={styles.form}>
             <TextInput
               label="Email"
@@ -118,43 +209,46 @@ export default class App extends Component<Props> {
               style={styles.input}
             />
             <Text style={{ fontSize: 20, color: "#000" }}>Hobbies:</Text>
-            <View style={{ width: width(80), height: 100, marginTop: -20 }}>
-              <CheckboxFormX
-                style={{ paddingLeft: width(20) }}
-                iconColor={"#000"}
-                dataSource={mockData}
-                itemShowKey="label"
-                itemCheckedKey="RNchecked"
-                iconSize={40}
-                formHorizontal={true}
-                labelHorizontal={false}
-                onChecked={item => this._onSelect(item)}
-              />
-            </View>
-
+            <RadioForm
+          radio_props={radio_props}
+          initial={null}
+          onPress={(value) => {this.setState({value:value, buttonValue:value})}}
+          buttonColor={'#000'}
+          formHorizontal={true}
+          buttonSize={10}
+          style={{paddingLeft:20, width:'80%', }}
+          labelStyle={{marginRight:20}}
+        />
+        <View style={{width:'80%', alignItems:'center'}}>
             <TouchableOpacity
-              onPress={this.storeData}
+              onPress={this.addData}
               style={{
                 width: 80,
                 height: 30,
                 borderWidth: 2,
-                borderRadius: 10,
+                borderRadius: 4,
                 borderColor: "#000",
                 alignItems: "center",
-                justifyContent: "center"
+                justifyContent: "center",
+                marginTop:20,
+
               }}
             >
               <Text> Submit</Text>
             </TouchableOpacity>
+            </View>
           </View>
           <View style={styles.table}>
             <View style={styles.headings}>
               <Text style={styles.headingtext}>Email</Text>
               <Text style={styles.headingtext}>Name</Text>
               <Text style={styles.headingtext}>Phone</Text>
+              <Text style={styles.headingtext}>Hobby</Text>
+  
             </View>
-            <View>{renderList}</View>
-          </View>
+            <View style={{justifyContent:'center'}}>
+          {this.List()}
+          </View></View>
         </ScrollView>
       </View>
     );
@@ -168,11 +262,11 @@ const styles = StyleSheet.create({
   },
   form: {
     flex: 1,
-    alignItems: "center"
+   
   },
   table: {
     flex: 1,
-    marginTop: 50,
+    marginTop: 20,
     width:'100%'
   },
   input: {
